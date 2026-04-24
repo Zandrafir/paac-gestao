@@ -866,7 +866,11 @@ function toast(msg,type=''){
 
 // ── INIT ───────────────────────────────────────────────
 const u=localStorage.getItem('pu'),k=localStorage.getItem('pk'),n=localStorage.getItem('pn');
-if(u&&k&&n){boot(u,k,n);}
+if(u&&k&&n){
+  boot(u,k,n);
+} else {
+  document.getElementById('setup-screen').style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px';
+}
 </script>
 </body>
 </html>
