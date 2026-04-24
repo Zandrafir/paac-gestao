@@ -279,7 +279,7 @@ document.head.appendChild(link);
 
   <!-- HOME -->
   <div class="page active" id="page-home">
-    <div class="welcome-card">
+    <div class="welcome-card" style="position:sticky;top:0;z-index:10;">
       <div class="welcome-greeting">▸ BEM-VINDO DE VOLTA</div>
       <div class="welcome-name" id="welcome-name">Profº Thiago</div>
       <div class="welcome-sub">PAAC — Gestor Acadêmico</div>
@@ -310,8 +310,44 @@ document.head.appendChild(link);
 
   <!-- TUTORIA -->
   <div class="page" id="page-tutoria">
-    <div class="section-title">Tutoria</div>
-    <div id="tutoria-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    <!-- VISÃO LISTA DE ALUNOS -->
+    <div id="tut-view-alunos">
+      <div class="section-title" style="margin-bottom:10px">Meus Tutorados</div>
+      <div style="margin-bottom:12px">
+        <input class="form-input" id="tut-busca" placeholder="🔍 Buscar aluno..." oninput="filtrarAlunos()" style="padding:10px 14px;font-size:13px"/>
+      </div>
+      <div id="tut-alunos-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+    <!-- VISÃO PERFIL DO ALUNO -->
+    <div id="tut-view-aluno" style="display:none">
+      <div class="back-row" onclick="voltarAlunos()">
+        <div class="back-btn">←</div>
+        <div class="back-title" id="tut-aluno-nome">Aluno</div>
+      </div>
+      <div id="tut-aluno-turma" style="font-size:12px;color:var(--neon);margin-bottom:12px;margin-left:42px;letter-spacing:1px"></div>
+      <!-- Stats do aluno -->
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center">
+          <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--neon)" id="tut-aluno-total">0</div>
+          <div style="font-size:10px;color:var(--text3);letter-spacing:1px">SESSÕES</div>
+        </div>
+        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center">
+          <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--purple)" id="tut-aluno-agendadas">0</div>
+          <div style="font-size:10px;color:var(--text3);letter-spacing:1px">AGENDADAS</div>
+        </div>
+      </div>
+      <!-- Botões -->
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button onclick="novaSessionAluno()" style="flex:1;background:transparent;border:2px solid var(--neon);color:var(--neon);font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;border-radius:var(--radius-sm);padding:12px;cursor:pointer">📝 REGISTRAR</button>
+        <button onclick="agendarTutoriaAluno()" style="flex:1;background:transparent;border:2px solid var(--purple);color:var(--purple);font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;border-radius:var(--radius-sm);padding:12px;cursor:pointer">📅 AGENDAR</button>
+      </div>
+      <!-- Agendamentos -->
+      <div class="card-title" style="margin-top:8px">Próximos Agendamentos</div>
+      <div id="tut-aluno-agenda" style="margin-bottom:14px"></div>
+      <!-- Histórico -->
+      <div class="card-title">Histórico de Sessões</div>
+      <div id="tut-aluno-historico"></div>
+    </div>
   </div>
 
   <!-- AULAS -->
@@ -432,12 +468,36 @@ document.head.appendChild(link);
   <div class="modal">
     <div class="modal-title" id="mt-title">Nova Sessão de Tutoria</div>
     <input type="hidden" id="t-id"/>
-    <div class="form-group"><label class="form-label">Nome do Aluno</label><input class="form-input" id="t-aluno" placeholder="Ex: João Silva"/></div>
+    <div class="form-group"><label class="form-label">Aluno</label>
+      <select class="form-input" id="t-aluno">
+        <option value="">Selecione o aluno...</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Data da Sessão</label><input class="form-input" type="date" id="t-data"/></div>
     <div class="form-group"><label class="form-label">Relatório da Sessão</label><textarea class="form-input form-textarea" id="t-relatorio" placeholder="O que foi discutido..."></textarea></div>
     <div class="form-group"><label class="form-label">Combinados para Próxima</label><textarea class="form-input form-textarea" id="t-combinados" placeholder="O que foi combinado..."></textarea></div>
     <button class="btn-primary" onclick="saveTutoria()">▶ SALVAR</button>
     <button class="btn-danger" id="del-tutoria" onclick="deleteTutoria()" style="display:none">✕ EXCLUIR</button>
     <button class="btn-cancel" onclick="closeModal('modal-tutoria')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL AGENDAR TUTORIA -->
+<div class="modal-overlay" id="modal-agendar" onclick="overlayClose(event,'modal-agendar')">
+  <div class="modal">
+    <div class="modal-title">📅 Agendar Tutoria</div>
+    <input type="hidden" id="ag-id"/>
+    <div class="form-group"><label class="form-label">Aluno</label>
+      <select class="form-input" id="ag-aluno">
+        <option value="">Selecione o aluno...</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Data</label><input class="form-input" type="date" id="ag-data"/></div>
+    <div class="form-group"><label class="form-label">Horário</label><input class="form-input" type="time" id="ag-hora"/></div>
+    <div class="form-group"><label class="form-label">Observação (opcional)</label><input class="form-input" id="ag-obs" placeholder="Ex: Revisar frações"/></div>
+    <button class="btn-primary" onclick="saveAgendamento()">▶ AGENDAR</button>
+    <button class="btn-danger" id="del-agenda" onclick="deleteAgendamento()" style="display:none">✕ CANCELAR AGENDAMENTO</button>
+    <button class="btn-cancel" onclick="closeModal('modal-agendar')">Fechar</button>
   </div>
 </div>
 
@@ -934,32 +994,207 @@ function openAulaDetalheNova() {
 }
 
 // ── TUTORIA ────────────────────────────────────────────
-async function loadTutoria(){
-  const el=document.getElementById('tutoria-list');
-  el.innerHTML=loading();
-  try{
-    const rows=await api('sessoes_tutoria');
-    if(!rows.length){el.innerHTML=empty('🎓','Nenhuma sessão registrada ainda.');return;}
-    el.innerHTML=rows.map(r=>`
-      <div class="list-item" onclick='openM("tutoria",${esc(r)})'>
-        <div class="list-item-top"><div class="list-item-name">${r.aluno_nome||'Aluno'}</div><span class="badge cyan">${fmtAgo(r.created_at)}</span></div>
-        <div class="list-item-sub">${(r.relatorio_texto||'Sem relatório').substring(0,60)}...</div>
-      </div>`).join('');
-  }catch(e){el.innerHTML=err(e);}
+// ── TUTORIA — SISTEMA COMPLETO ──────────────────────────
+const ALUNOS = [
+  {nome:'Guilherme Nieves',turma:'1ºD'},{nome:'Pedro Antonio',turma:'2ºA'},{nome:'Gabrielle Vitória',turma:'2ºA'},
+  {nome:'Davidson Rodrigues',turma:'1ºB'},{nome:'Nicolas Pereira',turma:'1ºB'},{nome:'Gerlandier',turma:'1ºE'},
+  {nome:'Iasmin Martins',turma:'2ºA'},{nome:'Julia Rocha',turma:'2ºE'},{nome:'Maria Eduarda Souza',turma:'2ºA'},
+  {nome:'Laura Maria',turma:'2ºA'},{nome:'Rossy Gabriela',turma:'1ºA'},{nome:'Ana Luiza Rodrigues',turma:'2ºA'},
+  {nome:'Nicolas Tavares',turma:'1ºA'},{nome:'Matheus Santana',turma:'2ºC'},{nome:'Nycolas Cordeiro',turma:'1ºC'},
+  {nome:'João Pedro',turma:'1ºD'},{nome:'João Paulo',turma:'1ºD'},{nome:'Sofia Torres',turma:'2ºF'},
+  {nome:'Giovanna Rente',turma:'2ºA'},{nome:'Mateus Assunção',turma:'1ºA'},{nome:'Thabata',turma:'2ºD'},
+  {nome:'Julia Bigas',turma:'2ºD'},{nome:'Gabriel Albuquerque',turma:'2ºB'},{nome:'Julia Vieira',turma:'2ºB'},
+  {nome:'José Victor',turma:'2ºE'}
+];
+
+let curAluno = null;
+let allSessoes = [];
+let allAgendamentos = [];
+
+function populateAlunoSelects(){
+  ['t-aluno','ag-aluno'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.innerHTML='<option value="">Selecione o aluno...</option>';
+    ALUNOS.forEach(a=>{el.innerHTML+=`<option value="${a.nome}">${a.nome} — ${a.turma}</option>`;});
+  });
 }
+
+async function loadTutoria(){
+  populateAlunoSelects();
+  document.getElementById('tut-view-alunos').style.display='block';
+  document.getElementById('tut-view-aluno').style.display='none';
+  curAluno=null;
+  try{
+    allSessoes=await api('sessoes_tutoria').catch(()=>[]);
+    allAgendamentos=await api('agendamentos_tutoria').catch(()=>[]);
+  }catch(e){}
+  renderAlunos();
+}
+
+function renderAlunos(filtro=''){
+  const el=document.getElementById('tut-alunos-list');
+  const f=filtro.toLowerCase();
+  const filtered=ALUNOS.filter(a=>!f||a.nome.toLowerCase().includes(f)||a.turma.toLowerCase().includes(f));
+
+  if(!filtered.length){el.innerHTML=empty('🔍','Nenhum aluno encontrado.');return;}
+
+  el.innerHTML=filtered.map(a=>{
+    const count=allSessoes.filter(s=>s.aluno_nome===a.nome).length;
+    const agendadas=allAgendamentos.filter(ag=>ag.aluno_nome===a.nome&&new Date(ag.data_agendamento)>=new Date(new Date().toDateString())).length;
+    return `<div class="list-item" onclick='abrirPerfilAluno(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
+      <div class="list-item-top">
+        <div class="list-item-name">${a.nome}</div>
+        <span class="badge cyan">${a.turma}</span>
+      </div>
+      <div class="list-item-sub" style="display:flex;gap:14px">
+        <span>📝 ${count} sessões</span>
+        ${agendadas?`<span style="color:var(--purple)">📅 ${agendadas} agendada${agendadas>1?'s':''}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filtrarAlunos(){
+  renderAlunos(document.getElementById('tut-busca').value);
+}
+
+async function abrirPerfilAluno(aluno){
+  curAluno=aluno;
+  document.getElementById('tut-view-alunos').style.display='none';
+  document.getElementById('tut-view-aluno').style.display='block';
+  document.getElementById('tut-aluno-nome').textContent=aluno.nome;
+  document.getElementById('tut-aluno-turma').textContent=`Turma ${aluno.turma}`;
+
+  // Sessões do aluno
+  const sessoes=allSessoes.filter(s=>s.aluno_nome===aluno.nome).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  document.getElementById('tut-aluno-total').textContent=sessoes.length;
+
+  // Agendamentos futuros
+  const hoje=new Date(new Date().toDateString());
+  const agenda=allAgendamentos.filter(a=>a.aluno_nome===aluno.nome&&new Date(a.data_agendamento)>=hoje).sort((a,b)=>new Date(a.data_agendamento)-new Date(b.data_agendamento));
+  document.getElementById('tut-aluno-agendadas').textContent=agenda.length;
+
+  // Render agendamentos
+  const agEl=document.getElementById('tut-aluno-agenda');
+  if(!agenda.length){agEl.innerHTML='<p style="font-size:12px;color:var(--text3);margin-bottom:8px">Nenhum agendamento futuro.</p>';}
+  else{agEl.innerHTML=agenda.map(a=>`
+    <div class="activity-item" onclick='editarAgendamento(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
+      <div class="activity-dot reuniao"></div>
+      <div class="activity-info">
+        <div class="activity-title">📅 ${fmtFull(a.data_agendamento)}${a.horario?' — '+a.horario:''}</div>
+        <div class="activity-sub">${a.observacao||'Sem observação'}</div>
+      </div>
+    </div>`).join('');}
+
+  // Render histórico
+  const histEl=document.getElementById('tut-aluno-historico');
+  if(!sessoes.length){histEl.innerHTML=empty('📝','Nenhuma sessão registrada.');}
+  else{histEl.innerHTML=sessoes.map(s=>`
+    <div class="list-item" onclick='openM("tutoria",${esc(s)})'>
+      <div class="list-item-top">
+        <div class="list-item-name">${fmtFull(s.data_sessao||s.created_at)}</div>
+        <span class="badge cyan">Sessão</span>
+      </div>
+      <div class="list-item-sub">${(s.relatorio_texto||'Sem relatório').substring(0,70)}...</div>
+      ${s.combinados_proxima?`<div class="list-item-sub" style="color:var(--neon);margin-top:4px">📌 ${s.combinados_proxima.substring(0,50)}</div>`:''}
+    </div>`).join('');}
+}
+
+function voltarAlunos(){
+  curAluno=null;
+  document.getElementById('tut-view-alunos').style.display='block';
+  document.getElementById('tut-view-aluno').style.display='none';
+  loadTutoria();
+}
+
+function novaSessionAluno(){
+  openM('tutoria');
+  if(curAluno) document.getElementById('t-aluno').value=curAluno.nome;
+  document.getElementById('t-data').value=new Date().toISOString().split('T')[0];
+}
+
+function agendarTutoriaAluno(){
+  document.getElementById('ag-id').value='';
+  document.getElementById('ag-data').value='';
+  document.getElementById('ag-hora').value='';
+  document.getElementById('ag-obs').value='';
+  document.getElementById('del-agenda').style.display='none';
+  populateAlunoSelects();
+  if(curAluno) document.getElementById('ag-aluno').value=curAluno.nome;
+  document.getElementById('modal-agendar').classList.add('open');
+}
+
+function editarAgendamento(ag){
+  document.getElementById('ag-id').value=ag.id;
+  document.getElementById('ag-data').value=ag.data_agendamento;
+  document.getElementById('ag-hora').value=ag.horario||'';
+  document.getElementById('ag-obs').value=ag.observacao||'';
+  populateAlunoSelects();
+  document.getElementById('ag-aluno').value=ag.aluno_nome;
+  document.getElementById('del-agenda').style.display='block';
+  document.getElementById('modal-agendar').classList.add('open');
+}
+
+async function saveAgendamento(){
+  const id=document.getElementById('ag-id').value;
+  const body={
+    aluno_nome:document.getElementById('ag-aluno').value,
+    data_agendamento:document.getElementById('ag-data').value,
+    horario:document.getElementById('ag-hora').value,
+    observacao:document.getElementById('ag-obs').value
+  };
+  if(!body.aluno_nome||!body.data_agendamento){toast('Preencha aluno e data','error');return;}
+  try{
+    if(id) await api('agendamentos_tutoria','PATCH',body,'id=eq.'+id);
+    else await api('agendamentos_tutoria','POST',body);
+    closeModal('modal-agendar');toast('Agendamento salvo!','success');
+    allAgendamentos=await api('agendamentos_tutoria').catch(()=>[]);
+    if(curAluno) abrirPerfilAluno(curAluno);
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
+
+async function deleteAgendamento(){
+  const id=document.getElementById('ag-id').value;
+  if(!id||!confirm('Cancelar este agendamento?'))return;
+  try{
+    await api('agendamentos_tutoria','DELETE',null,'id=eq.'+id);
+    closeModal('modal-agendar');toast('Cancelado','success');
+    allAgendamentos=await api('agendamentos_tutoria').catch(()=>[]);
+    if(curAluno) abrirPerfilAluno(curAluno);
+  }catch(e){toast('Erro','error');}
+}
+
 async function saveTutoria(){
   const id=document.getElementById('t-id').value;
-  const body={aluno_nome:document.getElementById('t-aluno').value,relatorio_texto:document.getElementById('t-relatorio').value,combinados_proxima:document.getElementById('t-combinados').value};
+  const body={
+    aluno_nome:document.getElementById('t-aluno').value,
+    data_sessao:document.getElementById('t-data').value||null,
+    relatorio_texto:document.getElementById('t-relatorio').value,
+    combinados_proxima:document.getElementById('t-combinados').value
+  };
+  if(!body.aluno_nome){toast('Selecione um aluno','error');return;}
   try{
     if(id) await api('sessoes_tutoria','PATCH',body,'id=eq.'+id);
     else await api('sessoes_tutoria','POST',body);
-    closeModal('modal-tutoria');toast('Salvo!','success');loadTutoria();loadHome();
+    closeModal('modal-tutoria');toast('Sessão salva!','success');
+    allSessoes=await api('sessoes_tutoria').catch(()=>[]);
+    if(curAluno) abrirPerfilAluno(curAluno);
+    else renderAlunos();
+    loadHome();
   }catch(e){toast('Erro: '+e.message,'error');}
 }
+
 async function deleteTutoria(){
   const id=document.getElementById('t-id').value;
-  if(!id||!confirm('Excluir?'))return;
-  try{await api('sessoes_tutoria','DELETE',null,'id=eq.'+id);closeModal('modal-tutoria');toast('Excluído','success');loadTutoria();}catch(e){toast('Erro','error');}
+  if(!id||!confirm('Excluir sessão?'))return;
+  try{
+    await api('sessoes_tutoria','DELETE',null,'id=eq.'+id);
+    closeModal('modal-tutoria');toast('Excluído','success');
+    allSessoes=await api('sessoes_tutoria').catch(()=>[]);
+    if(curAluno) abrirPerfilAluno(curAluno);
+    else renderAlunos();
+  }catch(e){toast('Erro','error');}
 }
 
 // ── ATPCG ──────────────────────────────────────────────
@@ -1125,8 +1360,10 @@ function setFontSizeDirect(s,save=true){
 function openM(name,data=null){
   const editing=!!data;
   if(name==='tutoria'){
+    populateAlunoSelects();
     document.getElementById('t-id').value=data?.id||'';
     document.getElementById('t-aluno').value=data?.aluno_nome||'';
+    document.getElementById('t-data').value=data?.data_sessao?.split('T')[0]||new Date().toISOString().split('T')[0];
     document.getElementById('t-relatorio').value=data?.relatorio_texto||'';
     document.getElementById('t-combinados').value=data?.combinados_proxima||'';
     document.getElementById('mt-title').textContent=editing?'Editar Sessão':'Nova Sessão de Tutoria';
