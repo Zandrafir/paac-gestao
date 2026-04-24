@@ -1,0 +1,22 @@
+{
+  "name": "PAAC Gestão Acadêmica",
+  "short_name": "PAAC",
+  "description": "Sistema de Gestão Acadêmica para professores PAAC",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050710",
+  "theme_color": "#00ffff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/zandrafir/paac-gestao/main/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/zandrafir/paac-gestao/main/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
