@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PAAC — Gestão Acadêmica</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #050710;
+  --bg2:      #080c18;
+  --bg3:      #0c1124;
+  --card:     #0f1630;
+  --card2:    #141b3a;
+  --border:   #1e2a4a;
+  --border2:  #2a3a6a;
+  --neon:     #00ffff;
+  --neon2:    #00bfff;
+  --neon-glow:rgba(0,255,255,0.35);
+  --purple:   #bf5fff;
+  --purple-g: rgba(191,95,255,0.3);
+  --green:    #00ff88;
+  --green-g:  rgba(0,255,136,0.3);
+  --yellow:   #ffe600;
+  --yellow-g: rgba(255,230,0,0.3);
+  --red:      #ff3c5f;
+  --red-g:    rgba(255,60,95,0.3);
+  --pink:     #ff2d78;
+  --text:     #e0eaff;
+  --text2:    #6a80b0;
+  --text3:    #2e3f6a;
+  --radius:   12px;
+  --radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow:hidden}
+
+/* SCANLINES */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,255,0.015) 2px,rgba(0,255,255,0.015) 4px);pointer-events:none;z-index:9998}
+
+/* SETUP */
+#setup-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
+.setup-logo{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;color:var(--neon);text-shadow:0 0 20px var(--neon),0 0 40px var(--neon2);letter-spacing:4px;margin-bottom:4px}
+.setup-sub{font-size:13px;color:var(--text2);letter-spacing:2px;margin-bottom:32px;text-align:center}
+.setup-input{width:100%;background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:14px 16px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;margin-bottom:12px;outline:none;letter-spacing:.5px}
+.setup-input:focus{border-color:var(--neon);box-shadow:0 0 10px rgba(0,255,255,0.2)}
+.setup-input::placeholder{color:var(--text3)}
+.btn-setup{width:100%;background:transparent;border:2px solid var(--neon);color:var(--neon);font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:3px;border-radius:var(--radius-sm);padding:16px;cursor:pointer;margin-top:8px;text-shadow:0 0 10px var(--neon);box-shadow:0 0 15px rgba(0,255,255,0.2);transition:all .2s}
+.btn-setup:active{background:rgba(0,255,255,0.1);box-shadow:0 0 30px rgba(0,255,255,0.4)}
+.setup-note{font-size:11px;color:var(--text3);text-align:center;margin-top:16px;line-height:1.7;letter-spacing:.5px}
+
+/* APP */
+#app{display:none;height:100%;flex-direction:column}
+#app.visible{display:flex}
+
+/* HEADER */
+.app-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 18px 12px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;position:relative}
+.app-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent)}
+.header-left .subtitle{font-size:10px;color:var(--neon);font-weight:600;letter-spacing:2px;text-transform:uppercase}
+.header-left .title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--text);letter-spacing:1px}
+.header-avatar{width:36px;height:36px;border-radius:50%;background:transparent;border:2px solid var(--neon);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;color:var(--neon);text-shadow:0 0 8px var(--neon);box-shadow:0 0 12px rgba(0,255,255,0.3)}
+
+/* PAGES */
+.page{display:none;flex:1;overflow-y:auto;padding:14px;flex-direction:column;gap:12px}
+.page.active{display:flex}
+.page::-webkit-scrollbar{width:2px}
+.page::-webkit-scrollbar-track{background:transparent}
+.page::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* BOTTOM NAV */
+.bottom-nav{background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:6px 0 18px;flex-shrink:0;position:relative}
+.bottom-nav::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent)}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;min-width:48px}
+.nav-icon{font-size:18px;transition:transform .2s}
+.nav-label{font-size:9px;color:var(--text3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;transition:color .2s}
+.nav-item.active .nav-label{color:var(--neon);text-shadow:0 0 8px var(--neon)}
+.nav-item.active .nav-icon{transform:scale(1.2);filter:drop-shadow(0 0 4px var(--neon))}
+.nav-item:active{transform:scale(.93)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden}
+.card-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--neon);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;text-shadow:0 0 8px var(--neon)}
+
+/* WELCOME */
+.welcome-card{background:linear-gradient(135deg,#0a1428,#0f1f40);border:1px solid var(--border2);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.welcome-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(0,255,255,.12),transparent 70%);pointer-events:none}
+.welcome-card::after{content:'';position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(191,95,255,.1),transparent 70%);pointer-events:none}
+.welcome-greeting{font-size:12px;color:var(--neon);letter-spacing:2px;margin-bottom:4px}
+.welcome-name{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--text);text-shadow:0 0 15px rgba(0,255,255,.3)}
+.welcome-sub{font-size:12px;color:var(--text2);margin-top:2px;letter-spacing:1px}
+.progress-section{margin-top:14px}
+.progress-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:6px;letter-spacing:.5px}
+.progress-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--purple));border-radius:3px;transition:width .8s ease;box-shadow:0 0 8px var(--neon-glow)}
+
+/* MODULE GRID */
+.module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.module-btn{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.module-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,255,255,.05),transparent);opacity:0;transition:opacity .2s}
+.module-btn:active{transform:scale(.95);border-color:var(--neon);box-shadow:0 0 15px rgba(0,255,255,.2)}
+.module-btn:active::before{opacity:1}
+.mod-icon{font-size:24px;filter:drop-shadow(0 0 4px currentColor)}
+.mod-label{font-size:10px;color:var(--text2);font-weight:600;letter-spacing:.5px;text-transform:uppercase;text-align:center}
+
+/* ACTIVITY */
+.activity-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;border:1px solid transparent}
+.activity-item:active{border-color:var(--border2);background:var(--card)}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.activity-dot.tutoria{background:var(--neon);box-shadow:0 0 6px var(--neon)}
+.activity-dot.aula{background:var(--green);box-shadow:0 0 6px var(--green)}
+.activity-dot.reuniao{background:var(--purple);box-shadow:0 0 6px var(--purple)}
+.activity-dot.projeto{background:var(--yellow);box-shadow:0 0 6px var(--yellow)}
+.activity-info{flex:1}
+.activity-title{font-size:13px;font-weight:600;color:var(--text)}
+.activity-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.activity-time{font-size:10px;color:var(--text3);letter-spacing:.5px}
+
+/* SECTION HEADER */
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.section-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--text);letter-spacing:1px}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.badge.cyan{background:rgba(0,255,255,.1);color:var(--neon);border:1px solid rgba(0,255,255,.3)}
+.badge.green{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.3)}
+.badge.yellow{background:rgba(255,230,0,.1);color:var(--yellow);border:1px solid rgba(255,230,0,.3)}
+.badge.red{background:rgba(255,60,95,.1);color:var(--red);border:1px solid rgba(255,60,95,.3)}
+.badge.purple{background:rgba(191,95,255,.1);color:var(--purple);border:1px solid rgba(191,95,255,.3)}
+
+/* LIST ITEMS */
+.list-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;cursor:pointer;transition:all .2s;margin-bottom:8px;position:relative;overflow:hidden}
+.list-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--neon);box-shadow:0 0 8px var(--neon);border-radius:3px 0 0 3px}
+.list-item:active{background:var(--card2);transform:scale(.99);border-color:var(--border2)}
+.list-item-top{display:flex;justify-content:space-between;align-items:flex-start;margin-left:10px}
+.list-item-name{font-weight:700;font-size:14px;color:var(--text)}
+.list-item-sub{font-size:12px;color:var(--text3);margin-top:4px;margin-left:10px;line-height:1.4}
+
+/* FAB */
+.fab{position:fixed;bottom:82px;right:18px;width:50px;height:50px;background:transparent;border:2px solid var(--neon);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--neon);cursor:pointer;box-shadow:0 0 20px rgba(0,255,255,.4),inset 0 0 15px rgba(0,255,255,.05);z-index:100;transition:all .2s;text-shadow:0 0 10px var(--neon)}
+.fab:active{transform:scale(.9);box-shadow:0 0 35px rgba(0,255,255,.7)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:flex-end;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--border2);border-left:1px solid var(--border);border-right:1px solid var(--border);width:100%;max-height:92vh;overflow-y:auto;padding:20px 18px 36px}
+.modal::before{content:'';display:block;width:40px;height:3px;background:var(--neon);border-radius:2px;margin:0 auto 18px;box-shadow:0 0 10px var(--neon)}
+.modal-title{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px;color:var(--neon);letter-spacing:1px;text-shadow:0 0 10px var(--neon)}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;color:var(--neon);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;outline:none;letter-spacing:.3px}
+.form-input:focus{border-color:var(--neon);box-shadow:0 0 8px rgba(0,255,255,.15)}
+.form-textarea{min-height:90px;resize:vertical}
+.btn-primary{width:100%;background:transparent;border:2px solid var(--neon);color:var(--neon);font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;border-radius:var(--radius-sm);padding:14px;cursor:pointer;margin-top:8px;text-shadow:0 0 8px var(--neon);box-shadow:0 0 12px rgba(0,255,255,.2);transition:all .2s}
+.btn-primary:active{background:rgba(0,255,255,.1);box-shadow:0 0 25px rgba(0,255,255,.4)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(255,60,95,.4);width:100%;font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;border-radius:var(--radius-sm);padding:12px;cursor:pointer;margin-top:8px;transition:all .2s}
+.btn-danger:active{background:rgba(255,60,95,.1)}
+.btn-cancel{width:100%;background:none;border:none;color:var(--text3);padding:14px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:14px;letter-spacing:.5px}
+
+/* STATUS */
+.status-row{display:flex;gap:8px;flex-wrap:wrap}
+.status-btn{padding:7px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);transition:all .2s;letter-spacing:.5px}
+.status-btn.selected.pendente-sel{border-color:var(--text2);color:var(--text2);box-shadow:0 0 8px rgba(106,128,176,.3)}
+.status-btn.selected.andamento-sel{border-color:var(--yellow);color:var(--yellow);box-shadow:0 0 8px var(--yellow-g)}
+.status-btn.selected.concluida-sel{border-color:var(--green);color:var(--green);box-shadow:0 0 8px var(--green-g)}
+
+/* AULA ITEM */
+.aula-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.aula-item:active{background:var(--card2)}
+.aula-status-bar{position:absolute;left:0;top:0;bottom:0;width:3px}
+.aula-status-bar.pendente{background:var(--text3)}
+.aula-status-bar.andamento{background:var(--yellow);box-shadow:0 0 8px var(--yellow)}
+.aula-status-bar.concluida{background:var(--green);box-shadow:0 0 8px var(--green)}
+.aula-info{flex:1;padding-left:6px}
+.aula-turma{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.aula-titulo{font-size:14px;font-weight:600;color:var(--text);margin-top:1px}
+.aula-pauta{font-size:11px;color:var(--neon2);margin-top:2px}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:30px;gap:10px;color:var(--text3);font-size:12px;letter-spacing:1px}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--neon);border-radius:50%;animation:spin .8s linear infinite;box-shadow:0 0 8px var(--neon-glow)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 20px;font-size:12px;z-index:9999;transition:transform .3s;white-space:nowrap;letter-spacing:.5px;font-family:'Orbitron',sans-serif}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.success{border-color:var(--green);color:var(--green);box-shadow:0 0 15px var(--green-g)}
+#toast.error{border-color:var(--red);color:var(--red);box-shadow:0 0 15px var(--red-g)}
+
+/* STAT */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center}
+.stat-num{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;margin-top:4px}
+.stat-label{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+
+/* REPORT BLOCK */
+.report-block{background:var(--bg3);border-left:3px solid var(--neon);padding:12px 14px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:10px;box-shadow:-2px 0 10px rgba(0,255,255,.1)}
+.report-block h4{font-size:10px;color:var(--neon);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-family:'Orbitron',sans-serif}
+.report-block p{font-size:13px;line-height:1.6;color:var(--text)}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-icon{font-size:40px;margin-bottom:12px;filter:grayscale(50%)}
+.empty-state p{font-size:13px;letter-spacing:.5px;line-height:1.6}
+
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300ffff' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div style="font-size:48px;margin-bottom:12px;filter:drop-shadow(0 0 12px cyan)">🎮</div>
+  <div class="setup-logo">P A A C</div>
+  <div class="setup-sub">Sistema de Gestão Acadêmica</div>
+  <input class="setup-input" id="su" placeholder="URL do Supabase  (https://xxx.supabase.co)" autocomplete="off"/>
+  <input class="setup-input" id="sk" placeholder="Chave anon/public do Supabase" autocomplete="off"/>
+  <input class="setup-input" id="sn" placeholder="Seu nome  (ex: Prof. Thiago)" autocomplete="off"/>
+  <button class="btn-setup" onclick="saveSetup()">▶  INICIAR SISTEMA</button>
+  <p class="setup-note">Credenciais salvas apenas neste dispositivo.<br>Nenhum dado enviado para terceiros.</p>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-header">
+    <div class="header-left">
+      <div class="subtitle">PAAC Dashboard</div>
+      <div class="title" id="header-title">Gestão Acadêmica</div>
+    </div>
+    <div class="header-avatar" id="user-avatar">P</div>
+  </div>
+
+  <!-- HOME -->
+  <div class="page active" id="page-home">
+    <div class="welcome-card">
+      <div class="welcome-greeting">▸ BEM-VINDO DE VOLTA</div>
+      <div class="welcome-name" id="welcome-name">Prof. Thiago</div>
+      <div class="welcome-sub" id="welcome-sub">PAAC — Gestor Acadêmico</div>
+      <div class="progress-section">
+        <div class="progress-meta">
+          <span>Progresso das Aulas</span>
+          <span id="progress-pct" style="color:var(--neon)">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Módulos do Sistema</div>
+      <div class="module-grid">
+        <div class="module-btn" onclick="goTo('tutoria')"><span class="mod-icon">🎓</span><span class="mod-label">Tutoria</span></div>
+        <div class="module-btn" onclick="goTo('aulas')"><span class="mod-icon">📚</span><span class="mod-label">Aulas</span></div>
+        <div class="module-btn" onclick="goTo('atpcg')"><span class="mod-icon">🏫</span><span class="mod-label">ATPCG</span></div>
+        <div class="module-btn" onclick="goTo('projetos')"><span class="mod-icon">🚀</span><span class="mod-label">Projetos</span></div>
+        <div class="module-btn" onclick="goTo('diario')"><span class="mod-icon">📓</span><span class="mod-label">Diário</span></div>
+        <div class="module-btn" onclick="goTo('relatorios')"><span class="mod-icon">📊</span><span class="mod-label">Relatórios</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-header">
+        <div class="section-title">Atividades Recentes</div>
+      </div>
+      <div id="activities-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+  </div>
+
+  <!-- TUTORIA -->
+  <div class="page" id="page-tutoria">
+    <div class="section-title">Tutoria</div>
+    <div id="tutoria-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- AULAS -->
+  <div class="page" id="page-aulas">
+    <div class="section-title">Aulas</div>
+    <div id="aulas-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- ATPCG -->
+  <div class="page" id="page-atpcg">
+    <div class="section-title">Reuniões ATPCG</div>
+    <div id="atpcg-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- PROJETOS -->
+  <div class="page" id="page-projetos">
+    <div class="section-title">Projetos</div>
+    <div id="projetos-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- DIÁRIO -->
+  <div class="page" id="page-diario">
+    <div class="section-title">Diário de Bordo</div>
+    <div id="diario-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- RELATÓRIOS -->
+  <div class="page" id="page-relatorios">
+    <div class="section-title">Relatórios</div>
+    <div id="relatorios-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></div>
+    <div class="nav-item" id="nav-tutoria" onclick="goTo('tutoria')"><span class="nav-icon">🎓</span><span class="nav-label">Tutoria</span></div>
+    <div class="nav-item" id="nav-aulas" onclick="goTo('aulas')"><span class="nav-icon">📚</span><span class="nav-label">Aulas</span></div>
+    <div class="nav-item" id="nav-atpcg" onclick="goTo('atpcg')"><span class="nav-icon">🏫</span><span class="nav-label">ATPCG</span></div>
+    <div class="nav-item" id="nav-projetos" onclick="goTo('projetos')"><span class="nav-icon">🚀</span><span class="nav-label">Projetos</span></div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab-btn" onclick="openFab()" style="display:none">＋</button>
+<div id="toast"></div>
+
+<!-- ── MODALS ───────────────────────────────────────────── -->
+
+<!-- TUTORIA -->
+<div class="modal-overlay" id="modal-tutoria" onclick="overlayClose(event,'modal-tutoria')">
+  <div class="modal">
+    <div class="modal-title" id="mt-title">Nova Sessão de Tutoria</div>
+    <input type="hidden" id="t-id"/>
+    <div class="form-group"><label class="form-label">Nome do Aluno</label><input class="form-input" id="t-aluno" placeholder="Ex: João Silva"/></div>
+    <div class="form-group"><label class="form-label">Relatório da Sessão</label><textarea class="form-input form-textarea" id="t-relatorio" placeholder="O que foi discutido, dificuldades, progressos..."></textarea></div>
+    <div class="form-group"><label class="form-label">Combinados para Próxima</label><textarea class="form-input form-textarea" id="t-combinados" placeholder="O que foi combinado..."></textarea></div>
+    <button class="btn-primary" onclick="saveTutoria()">▶ SALVAR</button>
+    <button class="btn-danger" id="del-tutoria" onclick="deleteTutoria()" style="display:none">✕ EXCLUIR REGISTRO</button>
+    <button class="btn-cancel" onclick="closeModal('modal-tutoria')">Cancelar</button>
+  </div>
+</div>
+
+<!-- AULA -->
+<div class="modal-overlay" id="modal-aula" onclick="overlayClose(event,'modal-aula')">
+  <div class="modal">
+    <div class="modal-title" id="ma-title">Nova Aula</div>
+    <input type="hidden" id="a-id"/>
+    <div class="form-group"><label class="form-label">Disciplina</label><input class="form-input" id="a-disc" placeholder="Ex: Matemática"/></div>
+    <div class="form-group"><label class="form-label">Turma</label><input class="form-input" id="a-turma" placeholder="Ex: 9º A"/></div>
+    <div class="form-group"><label class="form-label">Pauta / Conteúdo</label><textarea class="form-input form-textarea" id="a-pauta" placeholder="Conteúdo dado na aula..."></textarea></div>
+    <div class="form-group"><label class="form-label">Onde parei</label><input class="form-input" id="a-parei" placeholder="Ex: Pág 42, exercício 5"/></div>
+    <div class="form-group"><label class="form-label">Status</label>
+      <div class="status-row">
+        <div class="status-btn pendente-sel selected" id="sb-pendente" onclick="selStatus('pendente')">⬜ Pendente</div>
+        <div class="status-btn andamento-sel" id="sb-andamento" onclick="selStatus('andamento')">🟡 Em Andamento</div>
+        <div class="status-btn concluida-sel" id="sb-concluida" onclick="selStatus('concluida')">✅ Concluída</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveAula()">▶ SALVAR</button>
+    <button class="btn-danger" id="del-aula" onclick="deleteAula()" style="display:none">✕ EXCLUIR AULA</button>
+    <button class="btn-cancel" style="color:var(--neon);border:1px solid rgba(0,255,255,.3);border-radius:var(--radius-sm);margin-top:6px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px" id="btn-ver-materiais" onclick="abrirMateriais()" style="display:none">📄 VER / ADICIONAR MATERIAIS</button>
+    <button class="btn-cancel" onclick="closeModal('modal-aula')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MATERIAIS -->
+<div class="modal-overlay" id="modal-materiais" onclick="overlayClose(event,'modal-materiais')">
+  <div class="modal">
+    <div class="modal-title">📄 Materiais da Aula</div>
+    <div id="materiais-list"></div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      <div class="form-label" style="margin-bottom:10px">▸ ADICIONAR NOVO MATERIAL</div>
+      <div class="form-group"><label class="form-label">Arquivo PDF</label>
+        <input class="form-input" type="file" id="mat-file" accept=".pdf,.doc,.docx,.ppt,.pptx" style="padding:10px"/>
+      </div>
+      <div class="form-group"><label class="form-label">Nome do Material</label><input class="form-input" id="mat-nome" placeholder="Ex: Apostila Cap. 3"/></div>
+      <div class="form-group"><label class="form-label">Descrição (opcional)</label><input class="form-input" id="mat-desc" placeholder="Ex: Material de apoio — frações"/></div>
+      <button class="btn-primary" onclick="uploadMaterial()">▶ ENVIAR ARQUIVO</button>
+    </div>
+    <button class="btn-cancel" onclick="closeModal('modal-materiais')">Fechar</button>
+  </div>
+</div>
+
+<!-- ATPCG -->
+<div class="modal-overlay" id="modal-atpcg" onclick="overlayClose(event,'modal-atpcg')">
+  <div class="modal">
+    <div class="modal-title" id="mc-title">Nova Reunião ATPCG</div>
+    <input type="hidden" id="c-id"/>
+    <div class="form-group"><label class="form-label">Data da Reunião</label><input class="form-input" type="date" id="c-data"/></div>
+    <div class="form-group"><label class="form-label">Pauta / Assunto</label><textarea class="form-input form-textarea" id="c-pauta" placeholder="Tópicos discutidos..."></textarea></div>
+    <div class="form-group"><label class="form-label">Decisões / Minuta</label><textarea class="form-input form-textarea" id="c-decisoes" placeholder="O que foi decidido, encaminhamentos..."></textarea></div>
+    <div class="form-group"><label class="form-label">Diretoria de Ensino</label><input class="form-input" id="c-diretoria" placeholder="Ex: DE Centro-Oeste"/></div>
+    <button class="btn-primary" onclick="saveAtpcg()">▶ SALVAR</button>
+    <button class="btn-danger" id="del-atpcg" onclick="deleteAtpcg()" style="display:none">✕ EXCLUIR REUNIÃO</button>
+    <button class="btn-cancel" onclick="closeModal('modal-atpcg')">Cancelar</button>
+  </div>
+</div>
+
+<!-- PROJETO -->
+<div class="modal-overlay" id="modal-projeto" onclick="overlayClose(event,'modal-projeto')">
+  <div class="modal">
+    <div class="modal-title" id="mp-title">Novo Projeto</div>
+    <input type="hidden" id="p-id"/>
+    <div class="form-group"><label class="form-label">Nome do Projeto</label><input class="form-input" id="p-nome" placeholder="Ex: Feira de Ciências 2025"/></div>
+    <div class="form-group"><label class="form-label">Disciplinas Envolvidas</label><input class="form-input" id="p-disc" placeholder="Ex: Biologia, Química, Física"/></div>
+    <div class="form-group"><label class="form-label">Objetivos e Metas</label><textarea class="form-input form-textarea" id="p-obj" placeholder="Descreva os objetivos..."></textarea></div>
+    <div class="form-group"><label class="form-label">Prazo de Entrega</label><input class="form-input" type="date" id="p-prazo"/></div>
+    <div class="form-group"><label class="form-label">Status</label>
+      <select class="form-input" id="p-status">
+        <option value="planejamento">Planejamento</option>
+        <option value="em_andamento">Em Andamento</option>
+        <option value="concluido">Concluído</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="saveProjeto()">▶ SALVAR</button>
+    <button class="btn-danger" id="del-projeto" onclick="deleteProjeto()" style="display:none">✕ EXCLUIR PROJETO</button>
+    <button class="btn-cancel" onclick="closeModal('modal-projeto')">Cancelar</button>
+  </div>
+</div>
+
+<!-- DIÁRIO -->
+<div class="modal-overlay" id="modal-diario" onclick="overlayClose(event,'modal-diario')">
+  <div class="modal">
+    <div class="modal-title" id="md-title">Nova Entrada no Diário</div>
+    <input type="hidden" id="d-id"/>
+    <div class="form-group"><label class="form-label">Título</label><input class="form-input" id="d-titulo" placeholder="Ex: Reflexão do dia"/></div>
+    <div class="form-group"><label class="form-label">Anotação</label><textarea class="form-input form-textarea" style="min-height:130px" id="d-texto" placeholder="Suas observações, reflexões, lembretes..."></textarea></div>
+    <button class="btn-primary" onclick="saveDiario()">▶ SALVAR</button>
+    <button class="btn-danger" id="del-diario" onclick="deleteDiario()" style="display:none">✕ EXCLUIR ENTRADA</button>
+    <button class="btn-cancel" onclick="closeModal('modal-diario')">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────
+let URL='',KEY='',NAME='';
+let curPage='home', curStatus='pendente';
+
+function saveSetup(){
+  const u=document.getElementById('su').value.trim();
+  const k=document.getElementById('sk').value.trim();
+  const n=document.getElementById('sn').value.trim();
+  if(!u||!k||!n){toast('Preencha todos os campos','error');return;}
+  localStorage.setItem('pu',u);localStorage.setItem('pk',k);localStorage.setItem('pn',n);
+  boot(u,k,n);
+}
+
+function boot(u,k,n){
+  URL=u.replace(/\/$/,'');KEY=k;NAME=n;
+  document.getElementById('welcome-name').textContent=n;
+  document.getElementById('user-avatar').textContent=n.split(' ').pop()[0]||n[0];
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('fab-btn').style.display='flex';
+  loadHome();
+}
+
+// ── SUPABASE ────────────────────────────────────────────
+async function api(table,method='GET',body=null,filter=''){
+  let url=`${URL}/rest/v1/${table}`;
+  const params=[];
+  if(filter) params.push(filter);
+  if(method==='GET') params.push('order=created_at.desc');
+  if(params.length) url+='?'+params.join('&');
+  const h={'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
+  if(method==='POST') h['Prefer']='return=representation';
+  const r=await fetch(url,{method,headers:h,body:body?JSON.stringify(body):null});
+  if(!r.ok){const e=await r.text();throw new Error(e);}
+  if(method==='DELETE'||method==='PATCH') return true;
+  const t=await r.text();return t?JSON.parse(t):[];
+}
+
+// ── NAVIGATION ──────────────────────────────────────────
+function goTo(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  const pg=document.getElementById('page-'+p);
+  if(pg) pg.classList.add('active');
+  const nv=document.getElementById('nav-'+p);
+  if(nv) nv.classList.add('active');
+  curPage=p;
+  const titles={home:'Gestão Acadêmica',tutoria:'Tutoria',aulas:'Aulas',atpcg:'ATPCG',projetos:'Projetos',diario:'Diário de Bordo',relatorios:'Relatórios'};
+  document.getElementById('header-title').textContent=titles[p]||'PAAC';
+  const loaders={home:loadHome,tutoria:loadTutoria,aulas:loadAulas,atpcg:loadAtpcg,projetos:loadProjetos,diario:loadDiario,relatorios:loadRelatorios};
+  if(loaders[p]) loaders[p]();
+}
+
+function openFab(){
+  const map={home:'tutoria',tutoria:'tutoria',aulas:'aula',atpcg:'atpcg',projetos:'projeto',diario:'diario',relatorios:'tutoria'};
+  openM(map[curPage]||'tutoria');
+}
+
+// ── MODALS ──────────────────────────────────────────────
+function overlayClose(e,id){if(e.target===e.currentTarget)closeModal(id);}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function openM(name,data=null){
+  const editing=!!data;
+  if(name==='tutoria'){
+    document.getElementById('t-id').value=data?.id||'';
+    document.getElementById('t-aluno').value=data?.aluno_nome||'';
+    document.getElementById('t-relatorio').value=data?.relatorio_texto||'';
+    document.getElementById('t-combinados').value=data?.combinados_proxima||'';
+    document.getElementById('mt-title').textContent=editing?'Editar Sessão':'Nova Sessão de Tutoria';
+    document.getElementById('del-tutoria').style.display=editing?'block':'none';
+  }
+  if(name==='aula'){
+    document.getElementById('a-id').value=data?.id||'';
+    document.getElementById('a-disc').value=data?.disciplina||'';
+    document.getElementById('a-turma').value=data?.turma||'';
+    document.getElementById('a-pauta').value=data?.pauta||'';
+    document.getElementById('a-parei').value=data?.onde_parei||'';
+    selStatus(data?.status||'pendente');
+    document.getElementById('ma-title').textContent=editing?'Editar Aula':'Nova Aula';
+    document.getElementById('del-aula').style.display=editing?'block':'none';
+    document.getElementById('btn-ver-materiais').style.display=editing?'block':'none';
+  }
+  if(name==='atpcg'){
+    document.getElementById('c-id').value=data?.id||'';
+    document.getElementById('c-data').value=data?.data_reuniao?.split('T')[0]||new Date().toISOString().split('T')[0];
+    document.getElementById('c-pauta').value=data?.pauta_assunto||'';
+    document.getElementById('c-decisoes').value=data?.decisoes_minuta||'';
+    document.getElementById('c-diretoria').value=data?.diretoria_ensino||'';
+    document.getElementById('mc-title').textContent=editing?'Editar Reunião':'Nova Reunião ATPCG';
+    document.getElementById('del-atpcg').style.display=editing?'block':'none';
+  }
+  if(name==='projeto'){
+    document.getElementById('p-id').value=data?.id||'';
+    document.getElementById('p-nome').value=data?.nome_projeto||'';
+    document.getElementById('p-disc').value=(data?.disciplinas_envolvidas||[]).join(', ');
+    document.getElementById('p-obj').value=data?.objetivos_metas||'';
+    document.getElementById('p-prazo').value=data?.prazo_entrega?.split('T')[0]||'';
+    document.getElementById('p-status').value=data?.status||'planejamento';
+    document.getElementById('mp-title').textContent=editing?'Editar Projeto':'Novo Projeto';
+    document.getElementById('del-projeto').style.display=editing?'block':'none';
+  }
+  if(name==='diario'){
+    document.getElementById('d-id').value=data?.id||'';
+    document.getElementById('d-titulo').value=data?.titulo||'';
+    document.getElementById('d-texto').value=data?.texto||'';
+    document.getElementById('md-title').textContent=editing?'Editar Entrada':'Nova Entrada no Diário';
+    document.getElementById('del-diario').style.display=editing?'block':'none';
+  }
+  document.getElementById('modal-'+name).classList.add('open');
+}
+
+function selStatus(s){
+  curStatus=s;
+  ['pendente','andamento','concluida'].forEach(x=>{
+    const el=document.getElementById('sb-'+x);
+    if(el) el.classList.toggle('selected',x===s);
+  });
+}
+
+// ── HOME ───────────────────────────────────────────────
+async function loadHome(){
+  try{
+    const [aulas,tut,atpcg,proj]=await Promise.all([
+      api('aulas').catch(()=>[]),
+      api('sessoes_tutoria','GET',null,'limit=6').catch(()=>[]),
+      api('reunioes_atpcg','GET',null,'limit=4').catch(()=>[]),
+      api('projetos','GET',null,'limit=4').catch(()=>[])
+    ]);
+    const total=aulas.length||1;
+    const done=aulas.filter(a=>a.status==='concluida').length;
+    const pct=Math.round((done/total)*100);
+    document.getElementById('progress-fill').style.width=pct+'%';
+    document.getElementById('progress-pct').textContent=pct+'%';
+
+    const all=[
+      ...tut.map(r=>({tipo:'tutoria',title:r.aluno_nome||'Aluno',sub:'Sessão de Tutoria',date:r.created_at})),
+      ...atpcg.map(r=>({tipo:'reuniao',title:'Reunião ATPCG',sub:(r.pauta_assunto||'').substring(0,40),date:r.created_at})),
+      ...proj.map(r=>({tipo:'projeto',title:r.nome_projeto||'Projeto',sub:r.status||'',date:r.created_at})),
+      ...aulas.map(r=>({tipo:'aula',title:r.disciplina||'Aula',sub:r.turma||'',date:r.created_at})),
+    ].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+
+    const el=document.getElementById('activities-list');
+    if(!all.length){el.innerHTML=empty('📭','Nenhuma atividade ainda.<br>Comece registrando algo!');return;}
+    el.innerHTML=all.map(a=>`
+      <div class="activity-item" onclick="goTo('${a.tipo==='reuniao'?'atpcg':a.tipo}')">
+        <div class="activity-dot ${a.tipo}"></div>
+        <div class="activity-info">
+          <div class="activity-title">${a.title}</div>
+          <div class="activity-sub">${a.sub}</div>
+        </div>
+        <div class="activity-time">${fmtAgo(a.date)}</div>
+      </div>`).join('');
+  }catch(e){document.getElementById('activities-list').innerHTML=err(e);}
+}
+
+// ── TUTORIA ────────────────────────────────────────────
+async function loadTutoria(){
+  const el=document.getElementById('tutoria-list');
+  el.innerHTML=loading();
+  try{
+    const rows=await api('sessoes_tutoria');
+    if(!rows.length){el.innerHTML=empty('🎓','Nenhuma sessão registrada ainda.');return;}
+    el.innerHTML=rows.map(r=>`
+      <div class="list-item" onclick='openM("tutoria",${esc(r)})'>
+        <div class="list-item-top">
+          <div class="list-item-name">${r.aluno_nome||'Aluno não identificado'}</div>
+          <span class="badge cyan">${fmtAgo(r.created_at)}</span>
+        </div>
+        <div class="list-item-sub">${(r.relatorio_texto||'Sem relatório').substring(0,60)}...</div>
+      </div>`).join('');
+  }catch(e){el.innerHTML=err(e);}
+}
+async function saveTutoria(){
+  const id=document.getElementById('t-id').value;
+  const body={aluno_nome:document.getElementById('t-aluno').value,relatorio_texto:document.getElementById('t-relatorio').value,combinados_proxima:document.getElementById('t-combinados').value};
+  try{
+    if(id) await api('sessoes_tutoria','PATCH',body,'id=eq.'+id);
+    else await api('sessoes_tutoria','POST',body);
+    closeModal('modal-tutoria');toast('Sessão salva!','success');loadTutoria();loadHome();
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
+async function deleteTutoria(){
+  const id=document.getElementById('t-id').value;
+  if(!id||!confirm('Excluir esta sessão?'))return;
+  try{await api('sessoes_tutoria','DELETE',null,'id=eq.'+id);closeModal('modal-tutoria');toast('Excluído','success');loadTutoria();}catch(e){toast('Erro','error');}
+}
+
+// ── AULAS ──────────────────────────────────────────────
+async function loadAulas(){
+  const el=document.getElementById('aulas-list');
+  el.innerHTML=loading();
+  try{
+    const rows=await api('aulas');
+    if(!rows.length){el.innerHTML=empty('📚','Nenhuma aula registrada ainda.');return;}
+    el.innerHTML=rows.map(r=>`
+      <div class="aula-item" onclick='openM("aula",${esc(r)})'>
+        <div class="aula-status-bar ${r.status||'pendente'}"></div>
+        <div class="aula-info">
+          <div class="aula-turma">${r.turma||'Turma'} · ${fmtAgo(r.created_at)}</div>
+          <div class="aula-titulo">${r.disciplina||'Disciplina'}</div>
+          <div class="aula-pauta">${(r.pauta||'Sem pauta').substring(0,50)}</div>
+        </div>
+        <span style="font-size:16px">${{pendente:'⬜',andamento:'🟡',concluida:'✅'}[r.status]||'⬜'}</span>
+      </div>`).join('');
+  }catch(e){el.innerHTML=err(e);}
+}
+async function saveAula(){
+  const id=document.getElementById('a-id').value;
+  const body={disciplina:document.getElementById('a-disc').value,turma:document.getElementById('a-turma').value,pauta:document.getElementById('a-pauta').value,onde_parei:document.getElementById('a-parei').value,status:curStatus};
+  try{
+    if(id) await api('aulas','PATCH',body,'id=eq.'+id);
+    else await api('aulas','POST',body);
+    closeModal('modal-aula');toast('Aula salva!','success');loadAulas();loadHome();
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
+async function deleteAula(){
+  const id=document.getElementById('a-id').value;
+  if(!id||!confirm('Excluir esta aula?'))return;
+  try{await api('aulas','DELETE',null,'id=eq.'+id);closeModal('modal-aula');toast('Excluído','success');loadAulas();}catch(e){toast('Erro','error');}
+}
+
+function abrirMateriais(){
+  const id=document.getElementById('a-id').value;
+  if(!id) return;
+  closeModal('modal-aula');
+  document.getElementById('modal-materiais').classList.add('open');
+  loadMateriais(id);
+}
+
+// ── MATERIAIS / PDFs ───────────────────────────────────
+let curAulaId = null;
+
+async function loadMateriais(aulaId) {
+  curAulaId = aulaId;
+  const el = document.getElementById('materiais-list');
+  el.innerHTML = loading();
+  try {
+    const rows = await api('materiais_aula','GET',null,'aula_id=eq.'+aulaId);
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text3);font-size:12px;padding:10px 0">Nenhum material ainda.</p>'; return; }
+    el.innerHTML = rows.map(r=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:6px;border:1px solid var(--border)">
+        <span style="font-size:20px">📄</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${r.nome}</div>
+          ${r.descricao?`<div style="font-size:11px;color:var(--text3)">${r.descricao}</div>`:''}
+          ${r.tamanho_kb?`<div style="font-size:10px;color:var(--text3)">${r.tamanho_kb} KB</div>`:''}
+        </div>
+        <a href="${r.arquivo_url}" target="_blank" style="font-size:11px;color:var(--neon);font-family:'Orbitron',sans-serif;text-decoration:none;letter-spacing:.5px;border:1px solid rgba(0,255,255,.3);padding:5px 10px;border-radius:6px">ABRIR</a>
+        <span style="font-size:16px;cursor:pointer;color:var(--red)" onclick="deleteMaterial('${r.id}')">✕</span>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = err(e); }
+}
+
+async function uploadMaterial() {
+  if (!curAulaId) return;
+  const file = document.getElementById('mat-file').files[0];
+  const nome = document.getElementById('mat-nome').value || file?.name || 'Arquivo';
+  const desc = document.getElementById('mat-desc').value;
+  if (!file) { toast('Selecione um arquivo', 'error'); return; }
+  try {
+    // Upload para Supabase Storage
+    const ext = file.name.split('.').pop();
+    const path = `aulas/${curAulaId}/${Date.now()}.${ext}`;
+    const uploadRes = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
+      method: 'POST',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': file.type },
+      body: file
+    });
+    if (!uploadRes.ok) throw new Error('Erro no upload do arquivo');
+    const arquivo_url = `${URL}/storage/v1/object/public/materiais/${path}`;
+    await api('materiais_aula','POST',{
+      aula_id: curAulaId,
+      nome,
+      descricao: desc,
+      arquivo_url,
+      tamanho_kb: Math.round(file.size / 1024)
+    });
+    document.getElementById('mat-file').value = '';
+    document.getElementById('mat-nome').value = '';
+    document.getElementById('mat-desc').value = '';
+    toast('Material enviado!', 'success');
+    loadMateriais(curAulaId);
+  } catch(e) { toast('Erro: '+e.message, 'error'); }
+}
+
+async function deleteMaterial(id) {
+  if (!confirm('Excluir este material?')) return;
+  try { await api('materiais_aula','DELETE',null,'id=eq.'+id); loadMateriais(curAulaId); toast('Removido','success'); } catch(e) { toast('Erro','error'); }
+}
+
+// ── ATPCG ──────────────────────────────────────────────
+async function loadAtpcg(){
+  const el=document.getElementById('atpcg-list');
+  el.innerHTML=loading();
+  try{
+    const rows=await api('reunioes_atpcg');
+    if(!rows.length){el.innerHTML=empty('🏫','Nenhuma reunião registrada ainda.');return;}
+    el.innerHTML=rows.map(r=>`
+      <div class="list-item" style="--neon:var(--purple)" onclick='openM("atpcg",${esc(r)})'>
+        <div class="list-item-top">
+          <div class="list-item-name">${fmtFull(r.data_reuniao||r.created_at)}</div>
+          <span class="badge purple">ATPCG</span>
+        </div>
+        <div class="list-item-sub">${(r.pauta_assunto||'Sem pauta').substring(0,70)}</div>
+      </div>`).join('');
+  }catch(e){el.innerHTML=err(e);}
+}
+async function saveAtpcg(){
+  const id=document.getElementById('c-id').value;
+  const body={data_reuniao:document.getElementById('c-data').value,pauta_assunto:document.getElementById('c-pauta').value,decisoes_minuta:document.getElementById('c-decisoes').value,diretoria_ensino:document.getElementById('c-diretoria').value};
+  try{
+    if(id) await api('reunioes_atpcg','PATCH',body,'id=eq.'+id);
+    else await api('reunioes_atpcg','POST',body);
+    closeModal('modal-atpcg');toast('Reunião salva!','success');loadAtpcg();loadHome();
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
+async function deleteAtpcg(){
+  const id=document.getElementById('c-id').value;
+  if(!id||!confirm('Excluir esta reunião?'))return;
+  try{await api('reunioes_atpcg','DELETE',null,'id=eq.'+id);closeModal('modal-atpcg');toast('Excluído','success');loadAtpcg();}catch(e){toast('Erro','error');}
+}
+
+// ── PROJETOS ───────────────────────────────────────────
+async function loadProjetos(){
+  const el=document.getElementById('projetos-list');
+  el.innerHTML=loading();
+  try{
+    const rows=await api('projetos');
+    if(!rows.length){el.innerHTML=empty('🚀','Nenhum projeto registrado ainda.');return;}
+    const sc={planejamento:'cyan',em_andamento:'yellow',concluido:'green',cancelado:'red'};
+    el.innerHTML=rows.map(r=>`
+      <div class="list-item" style="--neon:var(--yellow)" onclick='openM("projeto",${esc(r)})'>
+        <div class="list-item-top">
+          <div class="list-item-name">${r.nome_projeto||'Projeto'}</div>
+          <span class="badge ${sc[r.status]||'cyan'}">${r.status||'planejamento'}</span>
+        </div>
+        <div class="list-item-sub">${(r.objetivos_metas||'Sem descrição').substring(0,60)}</div>
+        ${r.prazo_entrega?`<div class="list-item-sub" style="color:var(--yellow);margin-top:4px">📅 ${fmtFull(r.prazo_entrega)}</div>`:''}
+      </div>`).join('');
+  }catch(e){el.innerHTML=err(e);}
+}
+async function saveProjeto(){
+  const id=document.getElementById('p-id').value;
+  const disc=document.getElementById('p-disc').value;
+  const body={nome_projeto:document.getElementById('p-nome').value,disciplinas_envolvidas:disc?disc.split(',').map(s=>s.trim()):[],objetivos_metas:document.getElementById('p-obj').value,prazo_entrega:document.getElementById('p-prazo').value||null,status:document.getElementById('p-status').value};
+  try{
+    if(id) await api('projetos','PATCH',body,'id=eq.'+id);
+    else await api('projetos','POST',body);
+    closeModal('modal-projeto');toast('Projeto salvo!','success');loadProjetos();loadHome();
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
+async function deleteProjeto(){
+  const id=document.getElementById('p-id').value;
+  if(!id||!confirm('Excluir este projeto?'))return;
+  try{await api('projetos','DELETE',null,'id=eq.'+id);closeModal('modal-projeto');toast('Excluído','success');loadProjetos();}catch(e){toast('Erro','error');}
+}
+
+// ── DIÁRIO ─────────────────────────────────────────────
+function getDiario(){return JSON.parse(localStorage.getItem('paac_diario')||'[]');}
+function setDiario(v){localStorage.setItem('paac_diario',JSON.stringify(v));}
+function loadDiario(){
+  const el=document.getElementById('diario-list');
+  const rows=getDiario().sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(!rows.length){el.innerHTML=empty('📓','Nenhuma entrada no diário ainda.');return;}
+  el.innerHTML=rows.map(r=>`
+    <div class="list-item" style="--neon:var(--green)" onclick='openM("diario",${esc(r)})'>
+      <div class="list-item-top">
+        <div class="list-item-name">${r.titulo||'Sem título'}</div>
+        <span class="badge green">${fmtAgo(r.created_at)}</span>
+      </div>
+      <div class="list-item-sub">${(r.texto||'').substring(0,60)}</div>
+    </div>`).join('');
+}
+function saveDiario(){
+  const id=document.getElementById('d-id').value;
+  const rows=getDiario();
+  const entry={id:id||Date.now().toString(),titulo:document.getElementById('d-titulo').value,texto:document.getElementById('d-texto').value,created_at:id?(rows.find(e=>e.id===id)?.created_at||new Date().toISOString()):new Date().toISOString()};
+  if(id){const i=rows.findIndex(e=>e.id===id);if(i>=0)rows[i]=entry;}else rows.push(entry);
+  setDiario(rows);closeModal('modal-diario');toast('Salvo!','success');loadDiario();
+}
+function deleteDiario(){
+  const id=document.getElementById('d-id').value;
+  if(!id||!confirm('Excluir esta entrada?'))return;
+  setDiario(getDiario().filter(e=>e.id!==id));closeModal('modal-diario');toast('Excluído','success');loadDiario();
+}
+
+// ── RELATÓRIOS ─────────────────────────────────────────
+async function loadRelatorios(){
+  const el=document.getElementById('relatorios-content');
+  el.innerHTML=loading();
+  try{
+    const [tut,atpcg,proj,aulas]=await Promise.all([
+      api('sessoes_tutoria').catch(()=>[]),
+      api('reunioes_atpcg').catch(()=>[]),
+      api('projetos').catch(()=>[]),
+      api('aulas').catch(()=>[])
+    ]);
+    const conc=aulas.filter(a=>a.status==='concluida').length;
+    const andamento=aulas.filter(a=>a.status==='andamento').length;
+    el.innerHTML=`
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title">Resumo do Sistema</div>
+        <div class="stat-grid">
+          <div class="stat-card"><div style="font-size:24px">🎓</div><div class="stat-num" style="color:var(--neon)">${tut.length}</div><div class="stat-label">Tutorias</div></div>
+          <div class="stat-card"><div style="font-size:24px">🏫</div><div class="stat-num" style="color:var(--purple)">${atpcg.length}</div><div class="stat-label">Reuniões</div></div>
+          <div class="stat-card"><div style="font-size:24px">🚀</div><div class="stat-num" style="color:var(--yellow)">${proj.length}</div><div class="stat-label">Projetos</div></div>
+          <div class="stat-card"><div style="font-size:24px">✅</div><div class="stat-num" style="color:var(--green)">${conc}</div><div class="stat-label">Aulas OK</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title">Últimas Tutorias</div>
+        ${tut.slice(0,5).map(r=>`
+          <div class="report-block">
+            <h4>${r.aluno_nome||'Aluno'} · ${fmtFull(r.created_at)}</h4>
+            <p>${r.relatorio_texto||'Sem relatório'}</p>
+            ${r.combinados_proxima?`<p style="margin-top:6px;color:var(--neon)">📌 ${r.combinados_proxima}</p>`:''}
+          </div>`).join('')||'<p style="color:var(--text3);font-size:13px">Nenhuma sessão registrada</p>'}
+      </div>
+      <div class="card">
+        <div class="card-title">Projetos Ativos</div>
+        ${proj.filter(p=>p.status==='em_andamento').map(p=>`
+          <div class="report-block" style="border-color:var(--yellow);box-shadow:-2px 0 10px var(--yellow-g)">
+            <h4>${p.nome_projeto} · ${fmtFull(p.prazo_entrega||p.created_at)}</h4>
+            <p>${p.objetivos_metas||''}</p>
+          </div>`).join('')||'<p style="color:var(--text3);font-size:13px">Nenhum projeto em andamento</p>'}
+      </div>`;
+  }catch(e){el.innerHTML=err(e);}
+}
+
+// ── HELPERS ────────────────────────────────────────────
+function esc(obj){return JSON.stringify(obj).replace(/'/g,"&#39;");}
+function fmtAgo(d){if(!d)return'';const diff=Math.floor((Date.now()-new Date(d))/86400000);if(diff===0)return'Hoje';if(diff===1)return'Ontem';return diff+'d atrás';}
+function fmtFull(d){if(!d)return'';return new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});}
+function loading(){return'<div class="loading"><div class="spinner"></div>Carregando...</div>';}
+function empty(icon,msg){return`<div class="empty-state"><div class="empty-icon">${icon}</div><p>${msg}</p></div>`;}
+function err(e){return`<div class="empty-state"><div class="empty-icon">⚠️</div><p>Erro ao carregar.<br><small style="color:var(--red)">${e.message}</small></p></div>`;}
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=type?'show '+type:'show';
+  setTimeout(()=>t.className='',2500);
+}
+
+// ── INIT ───────────────────────────────────────────────
+const u=localStorage.getItem('pu'),k=localStorage.getItem('pk'),n=localStorage.getItem('pn');
+if(u&&k&&n){boot(u,k,n);}
+</script>
+</body>
+</html>
